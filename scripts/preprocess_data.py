@@ -1,9 +1,12 @@
 import os
 import sys
 import h5py
+import time
 import numpy as np
 
 from collections import defaultdict
+from operator import itemgetter
+from os import path
 
 argv = sys.argv[1:]
 
@@ -16,7 +19,17 @@ out_path = argv[1]
 
 # Columns we are going to ignore in the dataset
 # because they're redundant or non-informative
-STRIP_COLS = ('Record ID', 'Agency Name', 'Agency Code', 'Year', 'Month', 'Record Source')
+STRIP_COLS = ('Record ID', 'Agency Name', 'Agency Code',
+              'Year', 'Month', 'Record Source')
+
+if path.isfile(out_path):
+    msg = 'Output file at "%s" already exists, delete? (y/n): ' % out_path
+
+    if input(msg).strip('\n').lower() == 'y':
+        os.remove(out_path)
+    else:
+        print('Quitting')
+        sys.exit(2)
 
 with open(data_path, 'r') as data_f:
     with h5py.File(out_path) as out_f:
@@ -53,11 +66,15 @@ with open(data_path, 'r') as data_f:
         data_f.seek(0)
         data_f.readline() # skip headings after seek(0)
 
-        X = out_f.create_dataset('x', dtype='i8', shape=(sum_lines, sum_vec_entries))
+        X = out_f.create_dataset('x', dtype='i8',
+                                 shape=(sum_lines, sum_vec_entries))
+
+        start_time = time.time()
+        curr_idx = 0
+        temp_x = []
 
         for i, line in enumerate(data_f):
             sample_values = line.strip('\n').split(',')
-
             sample_vec = np.zeros(sum_vec_entries)
             idx_offset = 0
 
@@ -66,9 +83,20 @@ with open(data_path, 'r') as data_f:
                 sample_vec[col_values[c].index(v)+idx_offset] = 1
                 idx_offset += len(col_values[c])
 
-            X[i] = sample_vec
+            temp_x.append(sample_vec)
 
-            if (i+1) % 10000 == 0:
-                print('Processed %.1f%% of the samples...' % (100*(float(i+1)/sum_lines)))
+            if (i+1) % 100000 == 0 or (i+1) == sum_lines:
+                temp_x = np.array(temp_x)
+                np.random.shuffle(temp_x)
+
+                print('Processed %i samples (%.1f%%)...' % (i+1, 100*(float(i+1)/sum_lines)))
+                print('Storing collected data in h5py file...')
+
+                X[curr_idx:curr_idx+temp_x.shape[0]] = temp_x
+                curr_idx += temp_x.shape[0]
+
+                print('\nStored data successfully! (Took %.2fs)' % (time.time() - start_time))
+                start_time = time.time()
+                temp_x = []
 
         print('Successfully stored preprocessed samples in: %s' % out_path)
