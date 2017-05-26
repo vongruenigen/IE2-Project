@@ -16,13 +16,15 @@ sys.path.insert(0, source_path)
 
 from autoencoders import AutoEncoder, VariationalAutoencoder
 
-TRAINING_EPOCHS = 1000
+TRAINING_EPOCHS = 500
 BATCH_SIZE = 128
 DISPLAY_EPOCH = 1
 DISPLAY_BATCH = 1000
+#Hidden_Size herumspielen und ergebnisse vergleichen
 HIDDEN_SIZE = 256
 RESULTS_DIR = path.abspath(path.join(path.dirname(__file__), 'results'))
 
+#Autoencoder Klasse hier angeben, alternativ VariationalAutoencoder
 CurrentAutoEncoder = AutoEncoder
 
 def camel_to_sneak(name):
@@ -50,7 +52,8 @@ if len(argv) == 0:
 
 if len(argv) > 3:
     mode = argv[1]
-    emb_out_path = argv[2]
+    model_path = argv[2]
+    emb_out_path = argv[3]
 
 encoder_type = camel_to_sneak(CurrentAutoEncoder.__name__)
 time_stamp = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
@@ -58,7 +61,7 @@ result_name = '%s-%s-results/' % (time_stamp, encoder_type)
 result_path = path.join(RESULTS_DIR, result_name)
 
 if not path.isdir(result_path):
-    os.mkdir(result_path)
+    os.makedirs(result_path)
 else:
     error('Result directory "%s" already exists' % result_path)
     sys.exit(2)
@@ -80,7 +83,7 @@ def get_next_batch(train_data, num_batch, random=False, available_idxs=None):
         return (batch_data, available_idxs)
     else:
         return batch_data
-
+print("MODE " + mode)
 with tf.Session() as session:
     if mode == 'train':
         train_data_path = argv[0]
@@ -121,6 +124,7 @@ with tf.Session() as session:
         with h5py.File(samples_path) as samples_f:
             with h5py.File(emb_out_path) as emb_f:
                 samples_data = samples_f['x']
+                input_size = samples_data.shape[1]
                 num_samples = samples_data.shape[0]
                 samples_embs = emb_f.create_dataset('y', dtype='float32',
                                                     shape=(num_samples, HIDDEN_SIZE))
@@ -146,7 +150,7 @@ with tf.Session() as session:
 
                     samples_embs[start_idx:end_idx] = batch_y
 
-                    if (i+1) % DISPLAY_BATCH == 0:
-                        log('Processed %d of %d samples' % (i+1, sum_lines))
+                    if (num_batch+1) % DISPLAY_BATCH == 0:
+                        log('Processed %d of %d samples' % (num_batch+1, num_batches))
     else:
         error('Invalid mode %s' % mode)
