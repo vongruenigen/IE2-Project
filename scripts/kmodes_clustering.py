@@ -1,5 +1,5 @@
 from pyspark import SparkConf, SparkContext
-from pyspark_modes import EnsembleKModes
+from pyspark_kmodes import EnsembleKModes
 from pyspark.sql import SparkSession
 from numpy import array
 
@@ -24,8 +24,7 @@ def run_kmodes(sc):
 
     # Loads data.
     for n in range(2, 10):
-        dataset = sc.textFile("/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/data/samples.csv")
-        dataset = sc.parallelize(dataset, cpu_count)
+        dataset = sc.textFile("/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/data/samples.csv", cpu_count)
         dataset = dataset.map(lambda line: array([float(x) for x in line.split(';')]))
 
         method = EnsembleKModes(n, 50)
