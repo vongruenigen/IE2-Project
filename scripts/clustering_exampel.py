@@ -39,8 +39,8 @@ if __name__ == "__main__":
     cluster_loss = dict()
 
     # Loads data.
-    for n in range(2, 10):
-        dataset = spark.read.csv("C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database.txt", sep= " ", inferSchema=True)
+    for n in range(2, 11):
+        dataset = spark.read.csv("C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database_small.txt", sep= ";", inferSchema=True)
         dataVector = VectorAssembler(inputCols=dataset.columns[0:], outputCol='features')
         output = dataVector.transform(dataset)
         # Trains a k-means model.
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             print(center)
         cluster_loss[n] = wssse
     # Write Cluster loss pairs into json file
-    with open('C:/Users/MWeil/Documents/GitHub/IE2-Project/results/kmeans_elbowCurveData.json', 'w') as out_f:
+    with open('C:/Users/MWeil/Documents/GitHub/IE2-Project/results/kmeans_elbowCurveData_second.json', 'w') as out_f:
         json.dump(cluster_loss, out_f)
     import pdb; pdb.set_trace()
     spark.stop()

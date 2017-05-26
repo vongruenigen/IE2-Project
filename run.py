@@ -124,7 +124,7 @@ with tf.Session() as session:
 
         with open(samples_path, 'r') as samples_f:
             with open(emb_out_path, 'w+') as emb_f:
-                input_size, num_samples = get_input_size_and_length(train_f)
+                input_size, num_samples = get_input_size_and_length(samples_f)
                 log('Restoring model from %s' % model_path)
 
                 autoencoder = CurrentAutoEncoder(input_size, HIDDEN_SIZE, session=session)
