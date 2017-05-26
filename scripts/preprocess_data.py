@@ -1,6 +1,5 @@
 import os
 import sys
-import h5py
 import time
 import numpy as np
 
@@ -11,7 +10,7 @@ from os import path
 argv = sys.argv[1:]
 
 if len(argv) < 2:
-    print('ERROR: process_data.py <data-csv> <out-npy>')
+    print('ERROR: process_data.py <data-csv> <out-csv>')
     sys.exit(2)
 
 data_path = argv[0]
@@ -32,7 +31,7 @@ if path.isfile(out_path):
         sys.exit(2)
 
 with open(data_path, 'r') as data_f:
-    with h5py.File(out_path) as out_f:
+    with open(out_path, 'w+') as out_f:
         # Read headings
         columns = data_f.readline().strip('\n').split(',')
         col_values = defaultdict(list)
@@ -53,7 +52,7 @@ with open(data_path, 'r') as data_f:
 
         print('The number of distinct values for each column are:\n')
 
-        sum_lines = last_idx + 1
+        sum_lines = last_idx+1
         sum_vec_entries = 0
 
         for c, v in col_values.items():
@@ -61,13 +60,10 @@ with open(data_path, 'r') as data_f:
             sum_vec_entries += len(v)
 
         print('\nThe generated vectors will have a total of %d entries each' % sum_vec_entries)
-        print('The dataset has %i samples\n' % sum_lines)
+        print('The dataset has %i samples' % sum_lines)
 
         data_f.seek(0)
         data_f.readline() # skip headings after seek(0)
-
-        X = out_f.create_dataset('x', dtype='i8',
-                                 shape=(sum_lines, sum_vec_entries))
 
         start_time = time.time()
         curr_idx = 0
@@ -90,12 +86,18 @@ with open(data_path, 'r') as data_f:
                 np.random.shuffle(temp_x)
 
                 print('Processed %i samples (%.1f%%)...' % (i+1, 100*(float(i+1)/sum_lines)))
-                print('Storing collected data in h5py file...')
+                print('Storing collected data in CSV file...')
 
-                X[curr_idx:curr_idx+temp_x.shape[0]] = temp_x
+                temp_x_str = []
+
+                for i in range(temp_x.shape[0]):
+                    temp_x_str.append(';'.join(map(str, map(int, temp_x[i]))))
+           
+                out_f.write('%s\n' % '\n'.join(temp_x_str))
+
                 curr_idx += temp_x.shape[0]
 
-                print('\nStored data successfully! (Took %.2fs)' % (time.time() - start_time))
+                print('Stored data successfully! (Took %.2fs)' % (time.time() - start_time))
                 start_time = time.time()
                 temp_x = []
 

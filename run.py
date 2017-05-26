@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import tensorflow as tf
-import h5py
+import numpy as np
 import time
 
 from os import path
@@ -20,7 +20,6 @@ TRAINING_EPOCHS = 500
 BATCH_SIZE = 128
 DISPLAY_EPOCH = 1
 DISPLAY_BATCH = 1000
-#Hidden_Size herumspielen und ergebnisse vergleichen
 HIDDEN_SIZE = 256
 RESULTS_DIR = path.abspath(path.join(path.dirname(__file__), 'results'))
 
@@ -47,7 +46,7 @@ model_dir_path = None
 argv = sys.argv[1:]
 
 if len(argv) == 0:
-    log('ERROR: ./run.py <samples.py> [<mode=(train|embed)> <model-dir> <emb-out.h5>]')
+    log('ERROR: ./run.py <samples-csv> [<mode=(train|embed)> <model-dir> <emb-out-csv>]')
     sys.exit(2)
 
 if len(argv) > 3:
@@ -66,33 +65,35 @@ else:
     error('Result directory "%s" already exists' % result_path)
     sys.exit(2)
 
-def get_next_batch(train_data, num_batch, random=False, available_idxs=None):
-    idxs = None
+def get_next_batch(train_data, batch_size):
+    new_batch = []
 
-    if random:
-        idxs = [available_idxs.pop(random.randint(0, len(available_idxs))) \
-                for _ in range(BATCH_SIZE)]
-        idxs = list(sorted(idxs))
-    else:
-        start_idx = num_batch*BATCH_SIZE
-        idxs = range(start_idx, start_idx+BATCH_SIZE)
+    for _ in range(batch_size):
+        new_line = train_data.readline().strip('\n')
 
-    batch_data = train_data[idxs]
+        if new_line == '':
+            continue
 
-    if random:
-        return (batch_data, available_idxs)
-    else:
-        return batch_data
-print("MODE " + mode)
+        new_batch.append(np.array(list((map(float, new_line.split(';'))))))
+
+    return np.stack(new_batch)
+
+def get_input_size_and_length(data_f):
+    input_size = len(data_f.readline().split(';'))
+    data_f.seek(0)
+
+    num_samples = sum([1 for _ in data_f])
+    data_f.seek(0)
+
+    return input_size, num_samples
+
 with tf.Session() as session:
     if mode == 'train':
         train_data_path = argv[0]
         loss_track = []
 
-        with h5py.File(train_data_path) as train_f:
-            train_data = train_f['x']
-            input_size = train_data.shape[1]
-            num_samples = train_data.shape[0]
+        with open(train_data_path, 'r') as train_f:
+            input_size, num_samples = get_input_size_and_length(train_f)
 
             log('Starting training with a %s' % CurrentAutoEncoder.__name__)
 
@@ -107,7 +108,7 @@ with tf.Session() as session:
                 avg_loss = 0
 
                 for num_batch in range(num_batches):
-                    batch_x = get_next_batch(train_data, num_batch)
+                    batch_x = get_next_batch(train_f, BATCH_SIZE)
                     loss = autoencoder.batch_fit(batch_x)
                     avg_loss += (loss / num_samples) * BATCH_SIZE
 
@@ -121,14 +122,9 @@ with tf.Session() as session:
     elif mode == 'embed':
         samples_path = argv[0]
 
-        with h5py.File(samples_path) as samples_f:
-            with h5py.File(emb_out_path) as emb_f:
-                samples_data = samples_f['x']
-                input_size = samples_data.shape[1]
-                num_samples = samples_data.shape[0]
-                samples_embs = emb_f.create_dataset('y', dtype='float32',
-                                                    shape=(num_samples, HIDDEN_SIZE))
-
+        with open(samples_path, 'r') as samples_f:
+            with open(emb_out_path, 'w+') as emb_f:
+                input_size, num_samples = get_input_size_and_length(train_f)
                 log('Restoring model from %s' % model_path)
 
                 autoencoder = CurrentAutoEncoder(input_size, HIDDEN_SIZE, session=session)
@@ -145,10 +141,8 @@ with tf.Session() as session:
                     batch_x = get_next_batch(samples_data, num_batch)
                     batch_y = autoencoder.transform(batch_x)
 
-                    start_idx = num_batch * BATCH_SIZE
-                    end_idx = start_idx + BATCH_SIZE
-
-                    samples_embs[start_idx:end_idx] = batch_y
+                    for y in batch_y:
+                        emb_f.write('%s\n' % ';'.join(map(float, y)))
 
                     if (num_batch+1) % DISPLAY_BATCH == 0:
                         log('Processed %d of %d samples' % (num_batch+1, num_batches))
