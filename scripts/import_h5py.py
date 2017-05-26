@@ -2,7 +2,7 @@ import h5py
 import sys
 import os
 
-argv = sys.argv[1😏
+argv = sys.argv[1:]
 file = argv[0]
 out_file = argv[1]
 
