@@ -17,11 +17,10 @@
 
 from __future__ import print_function
 
-# $example on$
-from pyspark.ml.clustering import KMeans, KMeansModel
-# $example off$
-
+from pyspark.ml.clustering import KMeans
 from pyspark.sql import SparkSession
+from pyspark.ml.feature import VectorAssembler
+import json
 
 """
 An example demonstrating k-means clustering.
@@ -37,22 +36,29 @@ if __name__ == "__main__":
         .appName("KMeansExample")\
         .getOrCreate()
 
-    # $example on$
+    cluster_loss = dict()
+
     # Loads data.
-    dataset = spark.read.csv("C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database.txt")
-    print("LINE COUNT " + str(dataset.count()))
-    # Trains a k-means model.
-    #kmeans = KMeans().setK(2).setSeed(1)
-    #model = kmeans.fit(dataset)
+    for n in range(2, 10):
+        dataset = spark.read.csv("C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database.txt", sep= " ", inferSchema=True)
+        dataVector = VectorAssembler(inputCols=dataset.columns[0:], outputCol='features')
+        output = dataVector.transform(dataset)
+        # Trains a k-means model.
+        kmeans = KMeans().setK(n).setSeed(1)
+        model = kmeans.fit(output)
 
-    # Evaluate clustering by computing Within Set Sum of Squared Errors.
-    #wssse = model.computeCost(dataset)
-    #print("Within Set Sum of Squared Errors = " + str(wssse))
+        # Evaluate clustering by computing Within Set Sum of Squared Errors.
+        wssse = model.computeCost(output)
+        print("Within Set Sum of Squared Errors = " + str(wssse))
 
-    # Shows the result.
-    #centers = model.clusterCenters()
-    #print("Cluster Centers: ")
-    #for center in centers:
-    #    print(center)
-
+        # Shows the result.
+        centers = model.clusterCenters()
+        print("Cluster Centers: ")
+        for center in centers:
+            print(center)
+        cluster_loss[n] = wssse
+    # Write Cluster loss pairs into json file
+    with open('C:/Users/MWeil/Documents/GitHub/IE2-Project/results/kmeans_elbowCurveData.json', 'w') as out_f:
+        json.dump(cluster_loss, out_f)
+    import pdb; pdb.set_trace()
     spark.stop()
