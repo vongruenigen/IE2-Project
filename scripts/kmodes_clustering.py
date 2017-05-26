@@ -31,21 +31,11 @@ def run_kmodes(sc):
         method = EnsembleKModes(n, 50)
         model = method.fit(dataset)
 
-        def error(point):
-            center = clusters.centers[clusters.predict(point)]
-            return math.sqrt(sum([x**2 for x in (point - center)]))
-
-        # Evaluate clustering by computing Within Set Sum of Squared Errors.
-        wssse = dataset.map(lambda x: error(x)).reduce(lambda x, y: x+y)
-        print("Within Set Sum of Squared Errors = " + str(wssse))
-
-        clusters.save(sc, "/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/results/kmeans_model_%d" % n)
-
         cluster_infos[n]['cost'] = model.mean_cost
         cluster_infos[n]['centroids'] = model.clusters
 
     # Write Cluster loss pairs into json file
-    with open('/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/results/kmeans_elbowCurveData.json', 'w') as out_f:
+    with open('/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/results/kmodes_results.json', 'w') as out_f:
         json.dump(cluster_infos, out_f)
 
 if __name__ == "__main__":
