@@ -13,19 +13,19 @@ if len(argv) < 2:
     print('ERROR: process_data.py <data-csv> <out-csv>')
     sys.exit(2)
 
-data_path = argv[0]
-out_path = argv[1]
+RAW_DATA_PATH = argv[0]
+PREPROCESSED_DATA_PATH = argv[1]
 
 # Columns we are going to ignore in the dataset
 # because they're redundant or non-informative
 STRIP_COLS = ('Record ID', 'Agency Name', 'Agency Code',
               'Year', 'Month', 'Record Source')
 
-if path.isfile(out_path):
-    msg = 'Output file at "%s" already exists, delete? (y/n): ' % out_path
+if path.isfile(PREPROCESSED_DATA_PATH):
+    msg = 'Output file at "%s" already exists, delete? (y/n): ' % PREPROCESSED_DATA_PATH
 
     if input(msg).strip('\n').lower() == 'y':
-        os.remove(out_path)
+        os.remove(PREPROCESSED_DATA_PATH)
     else:
         print('Quitting')
         sys.exit(2)
@@ -101,4 +101,4 @@ with open(data_path, 'r') as data_f:
                 start_time = time.time()
                 temp_x = []
 
-        print('Successfully stored preprocessed samples in: %s' % out_path)
+        print('Successfully stored preprocessed samples in: %s' % PREPROCESSED_DATA_PATH)
