@@ -114,11 +114,11 @@ class VariationalAutoencoder(object):
         return self.session.run(self.z_mean, feed_dict={self.input: input})
 
     def partial_fit(self, X):
-        loss, opt = self.session.run((self.loss_fn, self.optimizer), feed_dict={self.x: X})
+        loss, opt = self.session.run((self.loss_fn, self.optimizer), feed_dict={self.input: X})
         return loss
 
     def transform(self, X):
-        return self.session.run(self.z_mean, feed_dict={self.x: X})
+        return self.session.run(self.z_mean, feed_dict={self.input: X})
 
     def __build(self):
         '''Builds the computational graph.'''
