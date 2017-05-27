@@ -24,7 +24,7 @@ HIDDEN_SIZE = 256
 RESULTS_DIR = path.abspath(path.join(path.dirname(__file__), 'results'))
 
 #Autoencoder Klasse hier angeben, alternativ VariationalAutoencoder
-CurrentAutoEncoder = AutoEncoder
+CurrentAutoEncoder = VariationalAutoencoder
 
 def camel_to_sneak(name):
     '''Convert a string from camel-case to sneak-case.'''
@@ -67,15 +67,12 @@ else:
 
 def get_next_batch(train_data, batch_size):
     new_batch = []
-
     for _ in range(batch_size):
         new_line = train_data.readline().strip('\n')
-
         if new_line == '':
             continue
 
         new_batch.append(np.array(list((map(float, new_line.split(';'))))))
-
     return np.stack(new_batch)
 
 def get_input_size_and_length(data_f):
@@ -136,13 +133,12 @@ with tf.Session() as session:
                 log('Starting to embed the samples in %s' % samples_path)
 
                 num_batches = int(num_samples / BATCH_SIZE)
-
                 for num_batch in range(num_batches):
-                    batch_x = get_next_batch(samples_data, num_batch)
+                    batch_x = get_next_batch(samples_f, BATCH_SIZE)
                     batch_y = autoencoder.transform(batch_x)
 
                     for y in batch_y:
-                        emb_f.write('%s\n' % ';'.join(map(float, y)))
+                        emb_f.write('%s\n' % ';'.join(map(str, y)))
 
                     if (num_batch+1) % DISPLAY_BATCH == 0:
                         log('Processed %d of %d samples' % (num_batch+1, num_batches))
