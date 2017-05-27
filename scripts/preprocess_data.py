@@ -30,8 +30,8 @@ if path.isfile(PREPROCESSED_DATA_PATH):
         print('Quitting')
         sys.exit(2)
 
-with open(data_path, 'r') as data_f:
-    with open(out_path, 'w+') as out_f:
+with open(RAW_DATA_PATH, 'r') as data_f:
+    with open(PREPROCESSED_DATA_PATH, 'w+') as out_f:
         # Read headings
         columns = data_f.readline().strip('\n').split(',')
         col_values = defaultdict(list)
