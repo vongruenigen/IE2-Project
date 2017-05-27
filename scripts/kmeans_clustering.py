@@ -28,8 +28,7 @@ def run_kmeans(sc):
 
     # Loads data.
     for n in range(2, 10):
-        dataset = sc.textFile("/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/data/samples.csv")
-        dataset = sc.parallelize(dataset, cpu_count)
+        dataset = sc.textFile("/media/dvg/Volume/Dropbox/ZHAW/IE2/Project/data/samples.csv", cpu_count)
         dataset = dataset.map(lambda line: array([float(x) for x in line.split(';')]))
 
         # Trains a k-means model.all
