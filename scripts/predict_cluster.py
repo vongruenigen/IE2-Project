@@ -7,9 +7,9 @@ import json
 import os
 
 APP_NAME = 'IE2-Project-Homocide-Reports'
-INPUT_DATA = "C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database_new.csv"
-OUTPUT_LABEL = "C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database_new_label.json"
-INPUT_MODEL = "C:/Users/MWeil/Documents/GitHub/IE2-Project/one-hot-clustering/kmeans_model_7"
+INPUT_DATA = "C:/Users/MWeil/Documents/GitHub/IE2-Project/emb/emb-out.txt"
+OUTPUT_LABEL = "C:/Users/MWeil/Documents/GitHub/IE2-Project/data/homicide-reports/database_new_label_emb.json"
+INPUT_MODEL = "C:/Users/MWeil/Documents/GitHub/IE2-Project/embedding-clustering/kmeans_model_7"
 
 def run_kmeans(sc):
     cpu_count = multiprocessing.cpu_count()
